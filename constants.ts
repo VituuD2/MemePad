@@ -10,9 +10,9 @@ import { SoundConfig } from './types';
 
 const BANK_A: SoundConfig[] = [
   { id: 'a1', label: 'fahh', filePath: '/sounds/fahh.mp3', color: 'red' },
-  { id: 'a2', label: 'Vine Boom', filePath: '/sounds/vine-boom.mp3', color: 'blue' },
-  { id: 'a3', label: 'Bruh', filePath: '/sounds/bruh.mp3', color: 'purple' },
-  { id: 'a4', label: 'Crickets', filePath: '/sounds/crickets.mp3', color: 'green' },
+  { id: 'a2', label: '38 cepagaria?', filePath: '/sounds/cepagaria.mp3', color: 'blue' },
+  { id: 'a3', label: '38 ceprefere', filePath: '/sounds/ceprefere.mp3', color: 'purple' },
+  { id: 'a4', label: 'como ñ posso?', filePath: '/sounds/tailung.mp3', color: 'green' },
   { id: 'a5', label: 'Sad Violin', filePath: '/sounds/sad-violin.mp3', color: 'blue' },
   { id: 'a6', label: 'Aplause', filePath: '/sounds/applause.mp3', color: 'magenta' },
   { id: 'a7', label: 'Drum Roll', filePath: '/sounds/drumroll.mp3', color: 'cyan' },

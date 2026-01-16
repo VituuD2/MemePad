@@ -63,10 +63,45 @@ export const useAudioEngine = () => {
   const toggleLoopMode = useCallback((id: string) => {
     setLoopModes(prev => {
       const next = new Set(prev);
-      if (next.has(id)) {
+      const isLoopingNow = next.has(id);
+      
+      if (isLoopingNow) {
+        // === TURNING LOOP OFF ===
         next.delete(id);
+        
+        // Fix: Find active sources for this ID and unlatch them
+        // This ensures they don't keep looping in the background
+        const sources = activeSourcesRef.current.get(id);
+        if (sources) {
+            sources.forEach(s => {
+                if (s instanceof AudioBufferSourceNode) {
+                    // Set loop to false so it stops at the end of the current buffer
+                    s.loop = false;
+                } else if (s instanceof OscillatorNode) {
+                    // Fallback synth doesn't have a buffer end, so stop immediately
+                    try { s.stop(); } catch(e) {}
+                    // Manually clean up visual state for synth
+                    setActivePads(p => {
+                        const np = new Set(p);
+                        np.delete(id);
+                        return np;
+                    });
+                }
+            });
+        }
       } else {
+        // === TURNING LOOP ON ===
         next.add(id);
+        
+        // Feature: Latch currently playing sounds if loop is toggled ON while playing
+        const sources = activeSourcesRef.current.get(id);
+        if (sources) {
+            sources.forEach(s => {
+                if (s instanceof AudioBufferSourceNode) {
+                    s.loop = true;
+                }
+            });
+        }
       }
       return next;
     });
@@ -131,6 +166,8 @@ export const useAudioEngine = () => {
       source = bufferSource;
 
       bufferSource.onended = () => {
+        // Only remove active state if the loop property is false
+        // We check the property on the node itself to handle dynamic unlatching
         if (!bufferSource.loop) {
              setActivePads(prev => {
                 const next = new Set(prev);
@@ -151,7 +188,6 @@ export const useAudioEngine = () => {
 
     } else {
       // === FALLBACK SYNTH PLAYBACK (If file not found) ===
-      // Now supports looping properly
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       
@@ -164,14 +200,23 @@ export const useAudioEngine = () => {
       
       osc.type = shouldLoop ? 'square' : 'triangle';
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(freq / 2, ctx.currentTime + 0.1);
+      
+      // Apply pitch to oscillator (detune)
+      // 100 cents = 1 semitone. 1200 cents = 1 octave.
+      // pitch 0.5 = -1200 cents, pitch 2.0 = +1200 cents
+      const detune = Math.log2(pitch) * 1200;
+      osc.detune.setValueAtTime(detune, ctx.currentTime);
+      
+      if (!shouldLoop) {
+          osc.frequency.exponentialRampToValueAtTime(freq / 2, ctx.currentTime + 0.1);
+      }
       
       gain.gain.setValueAtTime(0.5, ctx.currentTime);
 
       if (shouldLoop) {
           // Continuous play
           osc.start();
-          // We don't auto-stop
+          // No auto-stop
       } else {
           // One shot
           gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
@@ -221,8 +266,9 @@ export const useAudioEngine = () => {
             if (s instanceof AudioBufferSourceNode) {
                 s.playbackRate.setTargetAtTime(val, audioContextRef.current?.currentTime || 0, 0.1);
             } else if (s instanceof OscillatorNode) {
-               // Optional: Detune oscs
-               s.detune.setTargetAtTime((val - 1) * 1200, audioContextRef.current?.currentTime || 0, 0.1);
+               // Update detune for oscillators
+               const detune = Math.log2(val) * 1200;
+               s.detune.setTargetAtTime(detune, audioContextRef.current?.currentTime || 0, 0.1);
             }
         });
     });
