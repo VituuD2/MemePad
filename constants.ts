@@ -9,7 +9,7 @@ import { SoundConfig } from './types';
 // ============================================================================
 
 const BANK_A: SoundConfig[] = [
-  { id: 'a1', label: 'Airhorn', filePath: '/sounds/airhorn.mp3', color: 'red' },
+  { id: 'a1', label: 'fahh', filePath: '/sounds/fahh.mp3', color: 'red' },
   { id: 'a2', label: 'Vine Boom', filePath: '/sounds/vine-boom.mp3', color: 'blue' },
   { id: 'a3', label: 'Bruh', filePath: '/sounds/bruh.mp3', color: 'purple' },
   { id: 'a4', label: 'Crickets', filePath: '/sounds/crickets.mp3', color: 'green' },
